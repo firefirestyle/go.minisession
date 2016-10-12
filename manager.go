@@ -48,7 +48,8 @@ func MakeAccessTokenConfigFromRequest(r http.Request) AccessTokenConfig {
 func (obj *SessionManager) NewAccessToken(ctx context.Context, userName string, config AccessTokenConfig) (*AccessToken, error) {
 	ret := new(AccessToken)
 	ret.gaeObject = new(GaeAccessTokenItem)
-	idInfoObj, loginTime := obj.NewLoginIdInfo(userName, config)
+	loginTime := time.Now()
+	idInfoObj := obj.NewLoginIdInfo(userName, config)
 	ret.gaeObject.ProjectId = obj.projectId
 
 	ret.gaeObject.LoginId = idInfoObj.LoginId
@@ -67,7 +68,7 @@ func (obj *SessionManager) NewAccessToken(ctx context.Context, userName string, 
 }
 
 func (obj *SessionManager) NewAccessTokenFromLoginId(ctx context.Context, loginId string) (*AccessToken, error) {
-	idInfo, err := obj.ExtractUserFromLoginId(loginId)
+	idInfo, err := obj.NewLoginIdInfoFromLoginId(loginId)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +103,7 @@ type LoginIdInfo struct {
 	LoginId  string
 }
 
-func (obj *SessionManager) ExtractUserFromLoginId(loginId string) (*LoginIdInfo, error) {
+func (obj *SessionManager) NewLoginIdInfoFromLoginId(loginId string) (*LoginIdInfo, error) {
 	binary := []byte(loginId)
 	if len(binary) <= 28+28+1 {
 		return nil, ErrorExtract
@@ -129,14 +130,13 @@ func (obj *SessionManager) MakeDeviceId(userName string, info AccessTokenConfig)
 	return base64.StdEncoding.EncodeToString(sha1Hash.Sum(nil))
 }
 
-func (obj *SessionManager) NewLoginIdInfo(userName string, info AccessTokenConfig) (*LoginIdInfo, time.Time) {
-	t := time.Now()
-	DeviceID := obj.MakeDeviceId(userName, info)
+func (obj *SessionManager) NewLoginIdInfo(userName string, config AccessTokenConfig) *LoginIdInfo {
+	DeviceID := obj.MakeDeviceId(userName, config)
 	loginId := ""
 	sha1Hash := sha1.New()
 	io.WriteString(sha1Hash, DeviceID)
 	io.WriteString(sha1Hash, userName)
-	io.WriteString(sha1Hash, fmt.Sprintf("%X%X", t.UnixNano(), rand.Int63()))
+	io.WriteString(sha1Hash, fmt.Sprintf("%X", rand.Int63()))
 	loginId = base64.StdEncoding.EncodeToString(sha1Hash.Sum(nil))
 	loginId += DeviceID
 	loginId += base64.StdEncoding.EncodeToString([]byte(userName))
@@ -144,7 +144,7 @@ func (obj *SessionManager) NewLoginIdInfo(userName string, info AccessTokenConfi
 	ret.DeviceId = DeviceID
 	ret.UserName = userName
 	ret.LoginId = loginId
-	return ret, t
+	return ret
 }
 
 type CheckLoginIdInfo struct {
@@ -153,14 +153,16 @@ type CheckLoginIdInfo struct {
 	LoginIdInfoObj *LoginIdInfo
 }
 
-func (obj *SessionManager) CheckLoginId(ctx context.Context, loginId string, info AccessTokenConfig) (*CheckLoginIdInfo, error) {
+func (obj *SessionManager) CheckLoginId(ctx context.Context, loginId string, config AccessTokenConfig) (*CheckLoginIdInfo, error) {
 	ret := new(CheckLoginIdInfo)
 	accessTokenObj, err := obj.NewAccessTokenFromLoginId(ctx, loginId)
 	if err != nil {
 		ret.IsLogin = false
 		return ret, err
 	}
-	loginIdInfoObj, _ := obj.NewLoginIdInfo(accessTokenObj.GetUserName(), info)
+
+	// todo
+	loginIdInfoObj := obj.NewLoginIdInfo(accessTokenObj.GetUserName(), config)
 	ret.AccessTokenObj = accessTokenObj
 	ret.LoginIdInfoObj = loginIdInfoObj
 	if accessTokenObj.GetDeviceId() != loginIdInfoObj.DeviceId || accessTokenObj.GetLoginId() != loginId {
@@ -176,20 +178,16 @@ func (obj *SessionManager) CheckLoginId(ctx context.Context, loginId string, inf
 	return ret, nil
 }
 
-func (obj *SessionManager) Login(ctx context.Context, userName string, remoteAddr string, userAgent string, loginType string) (*AccessToken, error) {
-	loginIdObj, err1 := obj.NewAccessToken(ctx, userName, AccessTokenConfig{
-		IP:        remoteAddr,
-		UserAgent: userAgent,
-		LoginType: loginType,
-	})
+func (obj *SessionManager) Login(ctx context.Context, userName string, config AccessTokenConfig) (*AccessToken, error) {
+	loginIdObj, err1 := obj.NewAccessToken(ctx, userName, config)
 	if err1 == nil {
 		loginIdObj.UpdateMemcache(ctx)
 	}
 	return loginIdObj, err1
 }
 
-func (obj *SessionManager) Logout(ctx context.Context, loginId string, info AccessTokenConfig) error {
-	checkLoginIdInfoObj, err := obj.CheckLoginId(ctx, loginId, info)
+func (obj *SessionManager) Logout(ctx context.Context, loginId string, config AccessTokenConfig) error {
+	checkLoginIdInfoObj, err := obj.CheckLoginId(ctx, loginId, config)
 	if err != nil {
 		return err
 	}
