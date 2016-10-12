@@ -164,23 +164,12 @@ func (obj *AccessToken) LoadFromDB(ctx context.Context) error {
 	return errGetFromStore
 }
 
-func (obj *AccessToken) IsExistedOnDB(ctx context.Context) bool {
-	err := datastore.Get(ctx, obj.gaeObjectKey, obj.gaeObject)
-	if err == nil {
-		return true
-	} else {
-		return false
-	}
+func (obj *AccessToken) Logout(ctx context.Context) error {
+	obj.gaeObject.LoginId = ""
+	return obj.Save(ctx)
 }
 
 func (obj *AccessToken) Save(ctx context.Context) error {
-	_, e := datastore.Put(ctx, obj.gaeObjectKey, obj.gaeObject)
-	obj.UpdateMemcache(ctx)
-	return e
-}
-
-func (obj *AccessToken) Logout(ctx context.Context) error {
-	obj.gaeObject.LoginId = ""
 	_, e := datastore.Put(ctx, obj.gaeObjectKey, obj.gaeObject)
 	obj.UpdateMemcache(ctx)
 	return e
