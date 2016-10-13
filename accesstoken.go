@@ -65,7 +65,10 @@ func getStringFromProp(requestPropery map[string]interface{}, key string, defaul
 	}
 }
 
-func (obj *AccessToken) toJson() (string, error) {
+//
+// use package only. and in testcase
+//
+func (obj *AccessToken) ToJson() (string, error) {
 	v := map[string]interface{}{
 		TypeProjectId: obj.gaeObject.ProjectId,       //
 		TypeUserName:  obj.GetUserName(),             //
@@ -81,25 +84,9 @@ func (obj *AccessToken) toJson() (string, error) {
 	return string(vv), e
 }
 
-func (userObj *AccessToken) SetUserFromsJson(ctx context.Context, source string) error {
-	v := make(map[string]interface{})
-	e := json.Unmarshal([]byte(source), &v)
-	if e != nil {
-		return e
-	}
-	//
-	userObj.gaeObject.ProjectId = getStringFromProp(v, TypeProjectId, "")
-	userObj.gaeObject.UserName = v[TypeUserName].(string)
-	userObj.gaeObject.LoginTime = time.Unix(0, int64(v[TypeLoginTime].(float64))) //srcLogin
-	userObj.gaeObject.LoginId = v[TypeLoginId].(string)
-	userObj.gaeObject.DeviceID = v[TypeDeviceID].(string)
-	userObj.gaeObject.IP = v[TypeIP].(string)
-	userObj.gaeObject.Type = v[TypeIP].(string)
-	userObj.gaeObject.UserAgent = v[TypeUserAgent].(string)
-	userObj.gaeObject.Info = v[TypeInfo].(string)
-	return nil
-}
-
+//
+// use package only. and in testcase
+//
 func (obj *AccessToken) SetAccessTokenFromsJson(ctx context.Context, source string) error {
 	v := make(map[string]interface{})
 	e := json.Unmarshal([]byte(source), &v)
@@ -181,7 +168,7 @@ func (obj *AccessToken) DeleteFromDB(ctx context.Context) error {
 }
 
 func (obj *AccessToken) UpdateMemcache(ctx context.Context) error {
-	userObjMemSource, err_toJson := obj.toJson()
+	userObjMemSource, err_toJson := obj.ToJson()
 	if err_toJson == nil {
 		userObjMem := &memcache.Item{
 			Key:   obj.gaeObjectKey.StringID(),

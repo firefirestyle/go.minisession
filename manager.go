@@ -67,7 +67,7 @@ func (obj *SessionManager) NewAccessToken(ctx context.Context, userName string, 
 }
 
 func (obj *SessionManager) NewAccessTokenFromLoginId(ctx context.Context, loginId string) (*AccessToken, error) {
-	idInfo, err := obj.NewLoginIdInfoFromLoginId(loginId)
+	idInfo, err := obj.MakeLoginIdInfoFromLoginId(loginId)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ type LoginIdInfo struct {
 	LoginId  string
 }
 
-func (obj *SessionManager) NewLoginIdInfoFromLoginId(loginId string) (LoginIdInfo, error) {
+func (obj *SessionManager) MakeLoginIdInfoFromLoginId(loginId string) (LoginIdInfo, error) {
 	binary := []byte(loginId)
 	if len(binary) <= 28+28+1 {
 		return LoginIdInfo{}, ErrorExtract
