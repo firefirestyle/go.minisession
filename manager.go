@@ -1,4 +1,4 @@
-package gominisession
+package minisession
 
 import (
 	"time"
