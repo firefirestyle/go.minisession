@@ -13,6 +13,7 @@ import (
 	"github.com/mssola/user_agent"
 	"golang.org/x/net/context"
 	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/log"
 )
 
 type SessionManagerConfig struct {
@@ -41,7 +42,7 @@ type AccessTokenConfig struct {
 	LoginType string
 }
 
-func MakeAccessTokenConfigFromRequest(r http.Request) AccessTokenConfig {
+func MakeAccessTokenConfigFromRequest(r *http.Request) AccessTokenConfig {
 	return AccessTokenConfig{IP: r.RemoteAddr, UserAgent: r.UserAgent()}
 }
 
@@ -154,6 +155,7 @@ type CheckLoginIdResult struct {
 func (obj *SessionManager) CheckLoginId(ctx context.Context, loginId string, config AccessTokenConfig) CheckLoginIdResult {
 	accessTokenObj, err := obj.NewAccessTokenFromLoginId(ctx, loginId)
 	if err != nil {
+
 		return CheckLoginIdResult{
 			IsLogin:        false,
 			AccessTokenObj: nil,
@@ -167,7 +169,6 @@ func (obj *SessionManager) CheckLoginId(ctx context.Context, loginId string, con
 			AccessTokenObj: accessTokenObj,
 		}
 	}
-
 	return CheckLoginIdResult{
 		IsLogin:        true,
 		AccessTokenObj: accessTokenObj,
@@ -186,4 +187,8 @@ func (obj *SessionManager) Logout(ctx context.Context, loginId string, config Ac
 		return nil
 	}
 	return checkLoginIdInfoObj.AccessTokenObj.Logout(ctx)
+}
+
+func Debug(ctx context.Context, message string) {
+	log.Infof(ctx, message)
 }
