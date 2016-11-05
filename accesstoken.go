@@ -20,7 +20,7 @@ var ErrorOnServer = errors.New("server error")
 var ErrorExtract = errors.New("failed to extract")
 
 type GaeAccessTokenItem struct {
-	ProjectId string
+	RootGroup string
 	UserName  string
 	LoginTime time.Time
 
@@ -33,7 +33,7 @@ type GaeAccessTokenItem struct {
 }
 
 type SessionManager struct {
-	projectId          string
+	rootGroup          string
 	MemcacheExpiration time.Duration
 	loginIdKind        string
 }
@@ -45,7 +45,7 @@ type AccessToken struct {
 }
 
 const (
-	TypeProjectId = "ProjectId"
+	TypeRootGroup = "RootGroup"
 	TypeUserName  = "UserName"
 	TypeLoginTime = "LoginTime"
 	TypeLoginId   = "LoginId"
@@ -70,7 +70,7 @@ func getStringFromProp(requestPropery map[string]interface{}, key string, defaul
 //
 func (obj *AccessToken) ToJson() (string, error) {
 	v := map[string]interface{}{
-		TypeProjectId: obj.gaeObject.ProjectId,       //
+		TypeRootGroup: obj.gaeObject.RootGroup,       //
 		TypeUserName:  obj.GetUserName(),             //
 		TypeLoginTime: obj.GetLoginTime().UnixNano(), //
 		TypeLoginId:   obj.GetLoginId(),              //

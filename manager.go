@@ -17,16 +17,16 @@ import (
 )
 
 type SessionManagerConfig struct {
-	ProjectId string
+	RootGroup string
 	Kind      string
 }
 
 func NewSessionManager(config SessionManagerConfig) *SessionManager {
 	ret := new(SessionManager)
-	if config.ProjectId == "" {
-		ret.projectId = ""
+	if config.RootGroup == "" {
+		ret.rootGroup = ""
 	} else {
-		ret.projectId = config.ProjectId
+		ret.rootGroup = config.RootGroup
 	}
 	if config.Kind == "" {
 		ret.loginIdKind = "LoginId"
@@ -51,7 +51,7 @@ func (obj *SessionManager) NewAccessToken(ctx context.Context, userName string, 
 	ret.gaeObject = new(GaeAccessTokenItem)
 	loginTime := time.Now()
 	idInfoObj := obj.MakeLoginIdInfo(userName, config)
-	ret.gaeObject.ProjectId = obj.projectId
+	ret.gaeObject.RootGroup = obj.rootGroup
 
 	ret.gaeObject.LoginId = idInfoObj.LoginId
 	ret.gaeObject.IP = config.IP
@@ -75,7 +75,7 @@ func (obj *SessionManager) NewAccessTokenFromLoginId(ctx context.Context, loginI
 	ret := new(AccessToken)
 	ret.ItemKind = obj.loginIdKind
 	ret.gaeObject = new(GaeAccessTokenItem)
-	ret.gaeObject.ProjectId = obj.projectId
+	ret.gaeObject.RootGroup = obj.rootGroup
 	ret.gaeObjectKey = obj.NewAccessTokenGaeObjectKey(ctx, idInfo)
 	ret.gaeObject.LoginId = loginId
 
@@ -91,7 +91,7 @@ func (obj *SessionManager) NewAccessTokenGaeObjectKey(ctx context.Context, idInf
 }
 
 func (obj *SessionManager) MakeGaeObjectKeyStringId(userName string, deviceId string) string {
-	return obj.loginIdKind + ":" + obj.projectId + ":" + userName + ":" + deviceId
+	return obj.loginIdKind + ":" + obj.rootGroup + ":" + userName + ":" + deviceId
 }
 
 //
