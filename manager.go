@@ -152,7 +152,7 @@ type CheckLoginIdResult struct {
 	AccessTokenObj *AccessToken
 }
 
-func (obj *SessionManager) CheckLoginId(ctx context.Context, loginId string, config AccessTokenConfig) CheckLoginIdResult {
+func (obj *SessionManager) CheckLoginId(ctx context.Context, loginId string, config AccessTokenConfig, useIp bool) CheckLoginIdResult {
 	accessTokenObj, err := obj.NewAccessTokenFromLoginId(ctx, loginId)
 	if err != nil {
 
@@ -163,7 +163,7 @@ func (obj *SessionManager) CheckLoginId(ctx context.Context, loginId string, con
 	}
 
 	// todos
-	if accessTokenObj.GetLoginId() != loginId || accessTokenObj.GetIP() != config.IP || accessTokenObj.GetDeviceId() != obj.MakeDeviceId(accessTokenObj.GetUserName(), config) {
+	if accessTokenObj.GetLoginId() != loginId || (useIp == true && accessTokenObj.GetIP() != config.IP) || accessTokenObj.GetDeviceId() != obj.MakeDeviceId(accessTokenObj.GetUserName(), config) {
 		return CheckLoginIdResult{
 			IsLogin:        false,
 			AccessTokenObj: accessTokenObj,
@@ -182,7 +182,7 @@ func (obj *SessionManager) Login(ctx context.Context, userName string, config Ac
 }
 
 func (obj *SessionManager) Logout(ctx context.Context, loginId string, config AccessTokenConfig) error {
-	checkLoginIdInfoObj := obj.CheckLoginId(ctx, loginId, config)
+	checkLoginIdInfoObj := obj.CheckLoginId(ctx, loginId, config, false)
 	if checkLoginIdInfoObj.IsLogin == false {
 		return nil
 	}
